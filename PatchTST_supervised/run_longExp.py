@@ -4,6 +4,15 @@ import torch
 from exp.exp_main import Exp_Main
 import random
 import numpy as np
+import logging
+from datetime import datetime
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
@@ -94,12 +103,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Log GPU information
+    if torch.cuda.is_available():
+        logger.info(f"CUDA is available. Found {torch.cuda.device_count()} GPU(s)")
+        for i in range(torch.cuda.device_count()):
+            logger.info(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        logger.info(f"Using GPU: {args.gpu}")
+    else:
+        logger.warning("CUDA is not available. Running on CPU")
+
     # random seed
     fix_seed = args.random_seed
     random.seed(fix_seed)
     torch.manual_seed(fix_seed)
     np.random.seed(fix_seed)
-
+    logger.info(f"Set random seed to {fix_seed}")
 
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 
@@ -108,9 +126,11 @@ if __name__ == '__main__':
         device_ids = args.devices.split(',')
         args.device_ids = [int(id_) for id_ in device_ids]
         args.gpu = args.device_ids[0]
+        logger.info(f"Using multiple GPUs: {args.device_ids}")
 
-    print('Args in experiment:')
-    print(args)
+    logger.info('Experiment configuration:')
+    for arg in vars(args):
+        logger.info(f"{arg}: {getattr(args, arg)}")
 
     Exp = Exp_Main
 
@@ -135,18 +155,28 @@ if __name__ == '__main__':
                 args.distil,
                 args.des,ii)
 
+            logger.info(f"Starting iteration {ii+1}/{args.itr}")
+            logger.info(f"Experiment setting: {setting}")
+            
             exp = Exp(args)  # set experiments
-            print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
+            logger.info('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
+            start_time = datetime.now()
             exp.train(setting)
+            training_time = datetime.now() - start_time
+            logger.info(f'Training completed in {training_time}')
 
-            print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+            logger.info('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+            start_time = datetime.now()
             exp.test(setting)
+            testing_time = datetime.now() - start_time
+            logger.info(f'Testing completed in {testing_time}')
 
             if args.do_predict:
-                print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+                logger.info('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
                 exp.predict(setting, True)
 
             torch.cuda.empty_cache()
+            logger.info(f"GPU memory cleared after iteration {ii+1}")
     else:
         ii = 0
         setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
