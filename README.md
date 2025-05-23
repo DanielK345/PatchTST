@@ -43,7 +43,7 @@ We also test the capability of transfering the pre-trained model to downstream t
 
 ## Efficiency on Long Look-back Windows
 
-Our PatchTST consistently <ins>reduces the MSE scores as the look-back window increases</ins>, which confirms our model’s capability to learn from longer receptive field.
+Our PatchTST consistently <ins>reduces the MSE scores as the look-back window increases</ins>, which confirms our model's capability to learn from longer receptive field.
 
 ![alt text](https://github.com/yuqinie98/PatchTST/blob/main/pic/varying_L.png)
 
@@ -63,6 +63,53 @@ sh ./scripts/PatchTST/weather.sh
 ```
 
 You can adjust the hyperparameters based on your needs (e.g. different patch length, different look-back windows and prediction lengths.). We also provide codes for the baseline models.
+
+### Docker Deployment
+
+For easy deployment on any server with NVIDIA GPU support, we provide a Docker setup. This is especially useful for running experiments on remote servers or cloud platforms.
+
+#### Prerequisites
+
+1. Install Docker: https://docs.docker.com/get-docker/
+2. Install NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+#### Quick Start
+
+1. Build the Docker image:
+```bash
+docker build -t patchtst .
+```
+
+2. Run with GPU support:
+```bash
+docker run --gpus all \
+    -v /path/to/your/dataset:/app/dataset \
+    patchtst
+```
+
+#### Advanced Usage
+
+- Run on specific GPU:
+```bash
+docker run --gpus '"device=0"' \
+    -v /path/to/your/dataset:/app/dataset \
+    patchtst
+```
+
+- Run on CPU only:
+```bash
+docker run \
+    -v /path/to/your/dataset:/app/dataset \
+    patchtst
+```
+
+#### Monitoring
+
+- Training logs are saved to `/app/PatchTST_supervised/logs/LongForecasting/`
+- Model checkpoints are saved to `/app/PatchTST_supervised/checkpoints/`
+- View logs in real-time: `docker logs -f <container_id>`
+
+For more detailed Docker setup instructions and troubleshooting, see [DOCKER_README.md](DOCKER_README.md).
 
 ### Self-supervised Learning
 
