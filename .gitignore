@@ -2,7 +2,6 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=emacs,jetbrains+all,jupyternotebooks,linux,macos,microsoftoffice,notepadpp,python,tortoisegit,vim,visualstudiocode,windows
 
 myenv/
-dataset/
 ### Emacs ###
 # -*- mode: gitignore; -*-
 *~

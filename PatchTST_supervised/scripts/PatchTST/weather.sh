@@ -1,10 +1,38 @@
 #!/bin/bash
 
-# Get the absolute path to the project root
-PROJECT_ROOT="/mnt/d/PKDUY/AI-ML/PatchTST"
+# Detect OS and set project root accordingly
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Ubuntu/Linux
+    PROJECT_ROOT="$HOME/PatchTST"
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    # Windows
+    PROJECT_ROOT="/mnt/d/PKDUY/AI-ML/PatchTST"
+else
+    echo "Unsupported OS: $OSTYPE"
+    exit 1
+fi
+
+# Detect GPU and set CUDA device
+if command -v nvidia-smi &> /dev/null; then
+    GPU_COUNT=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader | wc -l)
+    if [ $GPU_COUNT -gt 0 ]; then
+        echo "Found $GPU_COUNT GPU(s):"
+        nvidia-smi --query-gpu=gpu_name,memory.total --format=csv,noheader
+        export CUDA_VISIBLE_DEVICES=0  # Use first GPU by default
+        echo "Using GPU: CUDA_VISIBLE_DEVICES=0"
+    else
+        echo "No NVIDIA GPU found. Running on CPU."
+        export CUDA_VISIBLE_DEVICES=""
+    fi
+else
+    echo "nvidia-smi not found. Running on CPU."
+    export CUDA_VISIBLE_DEVICES=""
+fi
+
 SUPERVISED_DIR="$PROJECT_ROOT/PatchTST_supervised"
 DATASET_DIR="$PROJECT_ROOT/dataset/weather"
 
+echo "OS detected: $OSTYPE"
 echo "Project root: $PROJECT_ROOT"
 echo "Supervised directory: $SUPERVISED_DIR"
 echo "Dataset directory: $DATASET_DIR"
